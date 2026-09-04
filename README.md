@@ -84,5 +84,16 @@ The [Releases](https://github.com/unpins/wabt/releases) page has standalone bina
 - All twelve programs live in one binary and share the single copy of libwabt
   they all link. `wabt` itself is not one of them: run bare, it lists what it
   carries.
+- **`libwasm` is not built.** Upstream builds the wasm C API as a shared
+  library alongside the tools; this package ships one static binary and nothing
+  beside it, and none of the twelve programs link it.
 - **Windows** is built with mingw: wabt is portable C++17 with no external
   dependency, so it cross-compiles as-is.
+- Upstream's test suite runs during the build on every 64-bit platform whose
+  binaries the build machine can execute. It is skipped on the 32-bit x86
+  build, where it does not pass: two of the 1822 interpreter checks disagree
+  about NaN results, because 32-bit x86 computes floats on the x87 stack and
+  that changes the bit pattern of a NaN (`0xffe00000` where the spec asks for
+  `0xffc00000`). Printed output is the same `nan` either way; a program reading
+  the raw bytes of a NaN out of a 32-bit x86 build would see the difference.
+  The rest of the cases it skips are upstream tests that assume a 64-bit host.

@@ -14,3 +14,6 @@ natively for Linux, macOS, and Windows.
   `wasm-strip`, `wasm-validate`, `wat-desugar` and `spectest-interp`.
 - All twelve man pages embedded in the binary — read one with
   `unpin man wabt <program>`.
+- Upstream's test suite runs during the build on the 64-bit platforms that can
+  execute what they built. It is skipped on 32-bit x86, where NaN results carry
+  a different bit pattern because floats go through the x87 stack.
