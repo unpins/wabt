@@ -5,6 +5,16 @@
 Initial release — `wabt` 1.0.41 as a single self-contained binary, built
 natively for Linux, macOS, and Windows.
 
+### Fixed
+
+- On Windows, `wat2wasm module.wat -o -` wrote a corrupted module: every line
+  feed in the binary became a carriage return plus a line feed. Reading a module
+  from standard input (`wasm2wat -`) was broken the same way in reverse, and
+  reported `invalid section size` on a perfectly good file. Named files were
+  always fine.
+- On Windows, text output now uses line feeds, matching every other platform
+  and upstream's own Windows build.
+
 ### Added
 
 - Builds for Linux (x86_64, aarch64, armv7l, i686, ppc64le, riscv64), macOS

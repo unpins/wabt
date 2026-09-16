@@ -84,6 +84,13 @@ The [Releases](https://github.com/unpins/wabt/releases) page has standalone bina
 - All twelve programs live in one binary and share the single copy of libwabt
   they all link. `wabt` itself is not one of them: run bare, it lists what it
   carries.
+- **`wasm2c` output needs upstream's runtime, which is not shipped here.** The
+  C that `wasm2c` writes starts with `#include "wasm-rt.h"`, and compiling it
+  also needs `wasm-rt-impl.c` and `wasm-rt-mem-impl.c`. Upstream installs those
+  next to the tool; this package is one binary and nothing beside it, so take
+  them from [the wabt source tree](https://github.com/WebAssembly/wabt)
+  (`include/wasm-rt.h`, `wasm2c/wasm-rt-*.c`) — about 80 KB, and the same
+  version as the binary. Every other program here is self-contained.
 - **`libwasm` is not built.** Upstream builds the wasm C API as a shared
   library alongside the tools; this package ships one static binary and nothing
   beside it, and none of the twelve programs link it.

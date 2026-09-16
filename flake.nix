@@ -58,13 +58,50 @@
           cmakeFlags = builtins.filter (f: f != "-DBUILD_TESTS=OFF") (old.cmakeFlags or [ ])
             ++ [ "-DBUILD_LIBWASM=OFF" "-DBUILD_TESTS=${if doCheck then "ON" else "OFF"}" ];
 
+          # Windows: all twelve programs call `InitStdio()` to put stdout into
+          # binary mode, and on a mingw build the whole body is compiled out --
+          # it is gated on `COMPILER_IS_MSVC`, the COMPILER, while what it
+          # guards is a property of the PLATFORM. Measured on the VM:
+          # `wat2wasm m.wat -o -` wrote 197 bytes where the same build writes
+          # 195 to a named file; the module holds exactly two 0x0A bytes and the
+          # stdout copy held exactly two `0d 0a` pairs -- every LF in a
+          # WebAssembly module had become CRLF.
+          #
+          # stdin is not covered at all, upstream MSVC builds included, even
+          # though `ReadFile()` opens a NAMED file with "rb" a few lines above.
+          # The same module through `wasm2wat -` came back
+          # `0000029: error: invalid section size: extends past end`: three
+          # `0d 0a` pairs eaten, three bytes short, section sizes no longer
+          # matching. By path it decoded fine -- the two doors of one program
+          # disagreed about what a byte is.
+          #
+          # Widen the gate to _WIN32 and add stdin, the mode the named path
+          # already uses. Text output moves from CRLF to LF on Windows, which is
+          # what upstream's own MSVC build has always done and makes the .wat
+          # that comes out byte-identical to every other platform. Inert off
+          # Windows: the guarded blocks do not exist there.
+          postPatch = (old.postPatch or "") + ''
+            substituteInPlace src/common.cc \
+              --replace-fail '#if COMPILER_IS_MSVC
+            #include <fcntl.h>' '#if COMPILER_IS_MSVC || defined(_WIN32)
+            #include <fcntl.h>' \
+              --replace-fail 'void InitStdio() {
+            #if COMPILER_IS_MSVC
+              int result = _setmode(_fileno(stdout), _O_BINARY);' 'void InitStdio() {
+            #if COMPILER_IS_MSVC || defined(_WIN32)
+              int result = _setmode(_fileno(stdin), _O_BINARY);
+              if (result == -1) {
+                perror("Cannot set mode binary to stdin");
+              }
+              result = _setmode(_fileno(stdout), _O_BINARY);'
+          ''
           # Upstream assumes BUILD_TESTS implies libwasm: the `c_api_example`
           # programs sit inside the BUILD_TESTS block and link the `wasm`
           # target, so with libwasm off they break the default `all` target
           # (`fatal error: 'wasm.h' file not found`) before a single test runs.
           # They exercise only the library we do not build; drop them, and the
           # `run-c-api-tests` target that gathers them goes empty.
-          postPatch = (old.postPatch or "") + pkgs.lib.optionalString doCheck ''
+          + pkgs.lib.optionalString doCheck ''
             sed -i '/^ *c_api_example(/d' CMakeLists.txt
           '';
 
