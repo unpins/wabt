@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.41-1] - 2026-09-26
+
 Initial release — `wabt` 1.0.41 as a single self-contained binary, built
 natively for Linux, macOS, and Windows.
 
