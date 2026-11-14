@@ -96,6 +96,9 @@ The [Releases](https://github.com/unpins/wabt/releases) page has standalone bina
   beside it, and none of the twelve programs link it.
 - **Windows** is built with mingw: wabt is portable C++17 with no external
   dependency, so it cross-compiles as-is.
+- **Not included:** WASI in `wasm-interp` (`--wasi`, `--env`, `--dir` answer
+  `wasi support not compiled in`). Upstream leaves its uvwasi-based WASI
+  support off by default, and nixpkgs does not turn it on.
 - Upstream's test suite runs during the build on every 64-bit platform whose
   binaries the build machine can execute. It is skipped on the 32-bit x86
   build, where it does not pass: two of the 1822 interpreter checks disagree

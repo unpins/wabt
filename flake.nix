@@ -20,7 +20,9 @@
   #
   # Plain portable C++17 CMake with no external dependency, so every target
   # builds from the same expression. Upstream's own submodules are all test- or
-  # opt-in-only for the tools build.
+  # opt-in-only for the tools build. One of those is uvwasi: WITH_WASI is off
+  # upstream and in nixpkgs, so `wasm-interp --wasi` answers `wasi support not
+  # compiled in` (README Build notes).
   outputs = { self, unpins-lib }:
     let
       ulib = unpins-lib.lib;
