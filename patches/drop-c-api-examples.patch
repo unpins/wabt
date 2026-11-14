@@ -1,0 +1,32 @@
+CMakeLists.txt: drop the c_api_example programs from the test build.
+
+Upstream assumes BUILD_TESTS implies libwasm: the c_api_example programs sit
+inside the BUILD_TESTS block and link the `wasm` target, so with libwasm off
+(-DBUILD_LIBWASM=OFF) they break the default `all` target (`fatal error:
+'wasm.h' file not found`) before a single test runs. They exercise only the
+library we do not build; the `run-c-api-tests` target that gathers them goes
+empty.
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -772,20 +772,7 @@
+     add_dependencies(run-c-api-tests ${EXENAME})
+   endfunction()
+ 
+-  c_api_example(callback)
+-  c_api_example(finalize)
+-  c_api_example(global)
+-  c_api_example(hello)
+-  c_api_example(hostref)
+-  c_api_example(multi)
+-  c_api_example(memory)
+-  c_api_example(reflect)
+-  c_api_example(serialize)
+-  c_api_example(start)
+-  c_api_example(table)
+-  c_api_example(trap)
+   if (CMAKE_USE_PTHREADS_INIT)
+-    c_api_example(threads)
+   endif ()
+ endif ()
+ 

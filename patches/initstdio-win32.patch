@@ -1,0 +1,43 @@
+InitStdio: binary stdin and stdout on every Windows build, mingw included.
+
+All twelve programs call InitStdio() to put stdout into binary mode, and on a
+mingw build the whole body is compiled out: it is gated on COMPILER_IS_MSVC,
+the compiler, while what it guards is a property of the platform. Measured on
+Windows 10: `wat2wasm m.wat -o -` wrote 197 bytes where the same build writes
+195 to a named file; every LF in the module had become CRLF.
+
+stdin is not covered at all, upstream MSVC builds included, even though
+ReadFile() opens a named file with "rb". `wasm2wat -` came back
+`invalid section size: extends past end`: three `0d 0a` pairs eaten.
+
+Widen the gate to _WIN32 (which also turns on the <io.h>/PATH_MAX/stat
+defines of the top block, and puts stderr in binary mode on mingw, as on MSVC)
+and add stdin. Text output moves from CRLF to LF on Windows, as upstream's own
+MSVC build has always done. Inert off Windows.
+
+--- a/src/common.cc
++++ b/src/common.cc
+@@ -26,7 +26,7 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ 
+-#if COMPILER_IS_MSVC
++#if COMPILER_IS_MSVC || defined(_WIN32)
+ #include <fcntl.h>
+ #include <io.h>
+ #include <stdlib.h>
+@@ -154,8 +154,12 @@
+ }
+ 
+ void InitStdio() {
+-#if COMPILER_IS_MSVC
+-  int result = _setmode(_fileno(stdout), _O_BINARY);
++#if COMPILER_IS_MSVC || defined(_WIN32)
++  int result = _setmode(_fileno(stdin), _O_BINARY);
++  if (result == -1) {
++    perror("Cannot set mode binary to stdin");
++  }
++  result = _setmode(_fileno(stdout), _O_BINARY);
+   if (result == -1) {
+     perror("Cannot set mode binary to stdout");
+   }
