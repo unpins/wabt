@@ -92,7 +92,7 @@ The [Releases](https://github.com/unpins/wabt/releases) page has standalone bina
   (`include/wasm-rt.h`, `wasm2c/wasm-rt-*.c`) — about 80 KB, and the same
   version as the binary. Every other program here is self-contained.
 - **`libwasm` is not built.** Upstream builds the wasm C API as a shared
-  library alongside the tools; this package ships one static binary and nothing
+  library alongside the programs; this package ships one self-contained binary and nothing
   beside it, and none of the twelve programs link it.
 - **Windows** is built with mingw: wabt is portable C++17 with no external
   dependency, so it cross-compiles as-is.
